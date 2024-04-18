@@ -13,9 +13,8 @@
 const express = require('express')
 const app = express()
 const db = require('./db');
+const passport = require('./auth');
 require('dotenv').config();
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
 
 const PORT = process.env.PORT || 3000
 const logRequest = (req ,res ,next) =>{
@@ -26,7 +25,14 @@ const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 
 //app.use(logRequest); if u want middleware for all routes.
-app.get('/', logRequest,function (req, res) {
+
+
+
+app.use(passport.initialize());
+
+const localAuthMiddleware = passport.authenticate('local',{session:false})
+
+app.get('/' ,localAuthMiddleware ,function (req, res) {
   res.send('Welcome to our Hotel')
 })
 
@@ -132,7 +138,7 @@ const menuRoutes = require('./routes/menuRoutes');
 
 //Use the routers
 app.use('/person',personRoutes);
-app.use('/menu',menuRoutes);
+app.use('/menu',localAuthMiddleware ,menuRoutes);
 
 
 
