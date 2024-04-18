@@ -14,14 +14,19 @@ const express = require('express')
 const app = express()
 const db = require('./db');
 require('dotenv').config();
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
 
 const PORT = process.env.PORT || 3000
-
+const logRequest = (req ,res ,next) =>{
+  console.log(`${new Date().toLocaleString()} Request made to : ${req.originalUrl}`);
+  next(); //Move to next phase.
+}
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 
-
-app.get('/', function (req, res) {
+//app.use(logRequest); if u want middleware for all routes.
+app.get('/', logRequest,function (req, res) {
   res.send('Welcome to our Hotel')
 })
 
