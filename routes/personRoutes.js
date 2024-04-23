@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();    
 const Person = require('./../models/person');
-const { findByIdAndDelete } = require('../models/menu');
 const {jwtAuthMiddleware ,generateToken} = require('./../jwt');
 
 
@@ -12,8 +11,13 @@ router.post('/signup',async (req,res)=>{
         const newPerson = new Person(data);
         const response = await newPerson.save();
         console.log('data saved');
-
-        const token = generateToken(response.username);
+        
+        const payload = {
+          id : response.id,
+          username: response.username
+        }
+        console.log(JSON.stringify(payload));
+        const token = generateToken(payload);
         console.log("Token is:",token);
         res.status(200).json({response:response ,token:token}); 
     }
@@ -23,8 +27,34 @@ router.post('/signup',async (req,res)=>{
     }
   })
 
+router.post('/login', async(req ,res)=>{
+  try{
+    const {username ,password} = req.body;
+
+    const user = await Person.findOne({username: username});
+
+    if(!user || !(await user.comparePassword(password))){
+      return res.status(401).json({error: 'Invalid username or password'});
+    }
+
+    //generate Token
+
+    const payload = {
+      id : user.id,
+      username: user.username
+    }
+    const token = generateToken(payload);
+
+    res.json({token})
+  }catch(err){
+    console.error(err);
+    res.status(500).json({error: 'Internal server Error'});
+  }
+})
+
+
 //Get method to get data
-router.get('/', async(req,res)=>{
+router.get('/', jwtAuthMiddleware, async(req,res)=>{
     try{
         const data =await Person.find();
         console.log("data fetched");
